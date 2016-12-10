@@ -2,6 +2,8 @@ import astropy.io.fits as pyfits
 import numpy as np
 import warnings
 
+from power_of_two_utils import next_power_of_2, is_power_of_2
+
 
 class LATLightCurve(object):
 
@@ -75,25 +77,25 @@ class LATLightCurve(object):
 
         return this_livetime_fraction
 
-    def get_light_curve(self, binsize):
+    def get_light_curve(self, target_binsize):
 
         # Histogram
 
-        # Compute number of bins and adjust binsize if needed, so that there will be an even number of bins
+        # Find the power of two that gives the closest (from below) binsize to the target binsize
+        target_n_edges = int(np.ceil((self._tmax - self._tmin) / target_binsize))
+        target_n_bins = target_n_edges - 1
 
-        n_edges = int(np.ceil((self._tmax - self._tmin) / binsize))
-
-        if (n_edges - 1) % 2 != 0:
-
-            n_edges += 1
+        # This finds the first power of 2 larger than target_n_bins
+        n_bins = next_power_of_2(target_n_bins)
+        n_edges = n_bins + 1
 
         edges, new_binsize = np.linspace(self._tmin, self._tmax, n_edges, retstep=True)
 
-        assert abs(new_binsize - binsize) <= binsize / 100.0
+        print("Target binsize was %s, new bin size (to preserve power of 2 rule) is %s" % (target_binsize, new_binsize))
 
         h, _ = np.histogram(self._time, edges)
 
-        assert h.shape[0] % 2 == 0
+        assert is_power_of_2(h.shape[0])
 
         bin_centers = (edges[:-1] + edges[1:]) / 2.0
 
@@ -104,7 +106,7 @@ class LATLightCurve(object):
 
         assert np.all(h_corrected >= h)
 
-        return h_corrected, bin_centers, edges
+        return h_corrected, bin_centers, edges, new_binsize
 
 
 
