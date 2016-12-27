@@ -54,7 +54,7 @@ def wavelet_spectrum(time, counts, dt, t1, t2, plot=True, quiet=False, max_time_
 
         J = None
 
-    result = cwt(data=counts_copy, mother='MEXICAN HAT', dt=dt, param=6, s0=s0, dj=dj, J=J)
+    result = cwt(data=counts_copy, mother='MEXICAN HAT', dt=dt, param=2, s0=s0, dj=dj, J=J)
 
     # import waipy
     # data_norm = waipy.normalize(counts_copy)
@@ -72,15 +72,13 @@ def wavelet_spectrum(time, counts, dt, t1, t2, plot=True, quiet=False, max_time_
 
         figure, sub = plt.subplots(1,1)
 
-        _ = sub.plot(result['period'], result['global_ws'] + result['autocorrelation'], 'o')
+        _ = sub.plot(result['period'], (result['global_ws'] + result['autocorrelation']) / result['scale'], 'o')
 
-        # Line at 1
-        _ = sub.axhline(1, linestyle='--', lw=3, color='black', alpha=0.5)
-
-        sub.set_xlabel("Wavelet period (s)")
+        sub.set_xlabel(r"$\delta t$ (s)")
         sub.set_ylabel("Power")
 
         sub.set_xscale("log")
+        sub.set_yscale("log")
 
         figure.tight_layout()
 
@@ -117,7 +115,9 @@ def worker(i, rate, dt, t1, t2, max_time_scale, results_to_save=('global_ws',)):
     map(lambda x: result.pop(x), keys_to_delete)
 
     # Transform the results in float16 to save memory
-    result['global_ws'] = np.array(result['global_ws'], np.float16)
+    if 'global_ws' in results_to_save:
+
+        result['global_ws'] = np.array(result['global_ws'], np.float16)
 
     return result
 
@@ -148,8 +148,9 @@ def background_spectrum(rate, dt, t1, t2, n_simulations=1000, plot=True, sig_lev
     all_results = []
 
     # Get one to get the periods (this is to spare memory)
-    one_result = worker(0, rate, dt, t1, t2, max_time_scale, results_to_save=['period', 'global_ws'])
+    one_result = worker(0, rate, dt, t1, t2, max_time_scale, results_to_save=['period', 'scale'])
     periods = np.array(one_result['period'])
+    scales = np.array(one_result['scale'])
 
     try:
 
@@ -174,10 +175,10 @@ def background_spectrum(rate, dt, t1, t2, n_simulations=1000, plot=True, sig_lev
 
     delta = sig_level / 2.0
 
-    for i, scale in enumerate(periods):
+    for i, scale in enumerate(scales):
 
         # Get the value from all simulations at this scale
-        values = map(lambda x:x['global_ws'][i], all_results)
+        values = map(lambda x:x['global_ws'][i] / scale, all_results)
 
         p16, p50, p84 = np.percentile(values, [50.0 - delta, 50.0, 50.0 + delta])
 
@@ -192,10 +193,11 @@ def background_spectrum(rate, dt, t1, t2, n_simulations=1000, plot=True, sig_lev
         _ = sub.fill_between(periods, low_bound, hi_bound, alpha=0.5)
         _ = sub.plot(periods, median, lw=2, color='black')
 
-        sub.set_xlabel("Time scale (s)")
+        sub.set_xlabel(r"$\delta t$ (s)")
         sub.set_ylabel("Power")
 
         sub.set_xscale("log")
+        sub.set_yscale("log")
 
         figure.tight_layout()
 
@@ -206,21 +208,22 @@ def background_spectrum(rate, dt, t1, t2, n_simulations=1000, plot=True, sig_lev
     return low_bound, median, hi_bound, figure
 
 
-def plot_spectrum_with_background(spectrum_results, low_bound, median, hi_bound):
+def plot_spectrum_with_background(spectrum_results, low_bound, median, hi_bound, **kwargs):
 
-    figure, sub = plt.subplots(1, 1)
+    figure, sub = plt.subplots(1, 1, **kwargs)
 
-    _ = sub.plot(spectrum_results['period'], spectrum_results['global_ws'] + spectrum_results['autocorrelation'], 'o')
+    _ = sub.plot(spectrum_results['period'],
+                 (spectrum_results['global_ws'] + spectrum_results['autocorrelation']) / spectrum_results['scale'],
+                 'o')
 
     _ = sub.fill_between(spectrum_results['period'], low_bound, hi_bound, alpha=0.5)
     _ = sub.plot(spectrum_results['period'], median, lw=2, color='black', linestyle='--')
 
-    sub.set_xlabel("Wavelet period (s)")
+    sub.set_xlabel(r"$\delta t$ (s)")
     sub.set_ylabel("Power")
 
     sub.set_xscale("log")
-
-    sub.set_xlim([7e-3, 10])
+    sub.set_yscale("log")
 
     figure.tight_layout()
 
