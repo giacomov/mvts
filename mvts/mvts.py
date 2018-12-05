@@ -3,10 +3,8 @@ import matplotlib.pyplot as plt
 import multiprocessing
 import sys
 import functools
-import itertools
-#import waipy
 
-from cwt import cwt
+from mvts.cwt import cwt
 
 
 def wavelet_spectrum(time, counts, dt, t1, t2, plot=True, quiet=False, max_time_scale=None):

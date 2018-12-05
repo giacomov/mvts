@@ -3,7 +3,7 @@ import numpy as np
 import warnings
 import numexpr
 
-from power_of_two_utils import next_power_of_2, is_power_of_2
+from mvts.power_of_two_utils import next_power_of_2, is_power_of_2
 
 
 class LightCurve(object):

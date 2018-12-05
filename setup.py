@@ -37,7 +37,8 @@ setup(
     classifiers=[],
 
     install_requires=[
-        'waipy',
+        'pycwt',
+        'numexpr',
         'numpy',
         'astropy',
         'matplotlib'],

@@ -1,7 +1,7 @@
 import numpy as np
 import pycwt
 
-from power_of_two_utils import is_power_of_2
+from mvts.power_of_two_utils import is_power_of_2
 
 # waipy.cwt(data=data_norm, mother='DOG', dt=dt, param=2, s0=dt * 2, dj=0.25,
 #                        J=7 / 0.25, pad=1, alpha=alpha, name='x')
