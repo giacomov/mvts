@@ -91,7 +91,7 @@ def wavelet_spectrum(time, counts, dt, t1, t2, plot=True, quiet=False, max_time_
 
 def simulate_flat_poisson_background(rate, dt, t1, t2):
 
-    time = np.arange(t1, t2, dt)
+    time = np.arange(t1, t2 + dt, dt)
     lc = np.random.poisson(rate * dt, time.shape[0])
 
     return time, lc
