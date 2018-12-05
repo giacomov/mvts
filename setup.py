@@ -3,7 +3,9 @@
 from setuptools import setup
 
 # Get the version number
-execfile('mvts/version.py')
+with open('mvts/version.py') as f:
+    ext_code = compile(f.read(), "mvts/version.py", 'exec')
+    exec(ext_code)
 
 # Normal packages
 
